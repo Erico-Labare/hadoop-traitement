@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<configuration>
+    <property>
+        <name>dfs.namenode.rpc-address</name>
+        <value>hadoop-master:8020</value>
+    </property>
+
+    <property>
+        <name>dfs.client.use.datanode.hostname</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>dfs.datanode.use.datanode.hostname</name>
+        <value>true</value>
+    </property>
+</configuration>
