@@ -1,0 +1,77 @@
+#version: "3.7"
+
+services:
+  # 1. Le service Hadoop Master (Contient NameNode, DataNode et YARN)
+  hadoop-master:
+    image: harisekhon/hadoop:latest
+    hostname: hadoop-master
+    container_name: hadoop-master
+    ports:
+      - "9870:9870"
+      - "8088:8088"
+      - "50070:50070"
+    environment:
+      - START_ALL=1
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+      - YARN_CONF_yarn_nodemanager_resource_memory_mb=6144
+      - HDFS_CONF_dfs_namenode_http_address=hadoop-master:9870
+    volumes:
+      - hadoop_data:/hdfs-data
+      # Pour les métadonnées (Vital)
+      - namenode_data:/tmp/hadoop-root/dfs/name
+      # Pour les blocs de données (Vital)
+      - datanode_data:/tmp/hadoop-root/dfs/data
+      # FIX CRITIQUE: Injecter le fichier hdfs-site.xml pour forcer la liaison RPC (0.0.0.0)	²²
+      - ./hdfs-site.xml:/usr/local/hadoop/etc/hadoop/hdfs-site.xml
+
+  # 2. Le service client/runner (Pour exécuter des commandes HDFS)
+  hadoop-runner:
+    image: harisekhon/hadoop:latest
+    hostname: hadoop-runner
+    container_name: hadoop-runner
+    environment:
+      - HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
+    volumes:
+      - ./data:/data
+      - ./programs:/programs
+      # FIX CRITIQUE: Injecter le fichier core-site.xml
+      # (Il doit contenir le nom d'hôte hadoop-master)
+      - ./core-site.xml:/usr/local/hadoop/etc/hadoop/core-site.xml
+    command: tail -f /dev/null # Maintient le conteneur en vie
+
+  hbase-master:
+    image: bde2020/hbase-master:latest
+    container_name: hbase-master
+    hostname: hbase-master
+    depends_on:
+      - hadoop-master
+    ports:
+      - "16010:16010"
+    environment:
+      HBASE_ROOTDIR: hdfs://hadoop-master:8020/hbase
+      HBASE_ZOOKEEPER_QUORUM: hbase-master
+    volumes:
+      - ./core-site.xml:/opt/hbase/conf/core-site.xml
+      - ./hdfs-site.xml:/opt/hbase/conf/hdfs-site.xml
+      - ./hbase-site.xml:/opt/hbase/conf/hbase-site.xml
+
+  hbase-regionserver:
+    image: bde2020/hbase-regionserver:latest
+    container_name: hbase-regionserver
+    hostname: hbase-regionserver
+    depends_on:
+      - hbase-master
+    ports:
+      - "16030:16030"
+    environment:
+      HBASE_MASTER: hbase-master
+    volumes:
+      - ./core-site.xml:/opt/hbase/conf/core-site.xml
+      - ./hdfs-site.xml:/opt/hbase/conf/hdfs-site.xml
+      - ./hbase-site.xml:/opt/hbase/conf/hbase-site.xml
+
+volumes:
+  hadoop_data:
+    driver: local
+  namenode_data:
+  datanode_data:

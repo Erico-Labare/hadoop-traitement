@@ -1,0 +1,9 @@
+TransactionID,Amount,Category,TransactionDate
+T1001,45.99,Electronics,2025-12-01
+T1002,120.50,Clothing,2025-12-01
+T1003,5.00,Food,2025-12-02
+T1004,88.25,Electronics,2025-12-02
+T1005,10.00,Food,2025-12-03
+T1006,500.00,Electronics,2025-12-03
+MALFORMED_RECORD_1,Electronics,2025-12-04
+T1007,25.99,Clothing,2025-12-04
