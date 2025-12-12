@@ -1,46 +1,22 @@
 package com.tp.hadoop;
 
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
-public class DataProfilerReducer extends Reducer<Text, Text, Text, Text> {
+public class DataProfilerReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
 
-    protected void reduce(Text key, Iterable<Text> values, Context context)
+    @Override
+    protected void reduce(Text key, Iterable<DoubleWritable> values, Context context)
             throws IOException, InterruptedException {
 
-        long validRecords = 0;
-        long invalidRecords = 0;
-        double numericSum = 0.0;
-
-        for (Text value : values) {
-            String[] parts = value.toString().split("\t");
-
-            if (parts.length >=1) {
-                if (parts[0].equals("VALIDE ?????")) {
-
-                    validRecords++;
-
-                    if (parts.length == 2) {
-                        try{
-                            numericSum += Double.parseDouble(parts[1]);
-                        } catch (NumberFormatException e){
-
-                        }
-                    }
-                } else if (parts[0].equals("INVALID ??????")) {
-                    invalidRecords++;
-                }
-            }
+        double sum = 0.0;
+        for (DoubleWritable val : values) {
+            sum += val.get();
         }
 
-        long totalRecords = validRecords + invalidRecords;
-
-        context.write(new Text(""), new Text(String.valueOf(totalRecords)));
-        context.write(new Text(""), new Text(String.valueOf(validRecords)));
-        context.write(new Text(""), new Text(String.valueOf(invalidRecords)));
-        context.write(new Text(""), new Text(String.valueOf(numericSum)));
-
+        context.write(key, new DoubleWritable(sum));
     }
 }
